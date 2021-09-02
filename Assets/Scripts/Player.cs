@@ -6,11 +6,13 @@ public class Player : MonoBehaviour
 {
     private CharacterController _cc;
     private Vector3 _direction;
-    [SerializeField] private float _speed = 12.0f;
+    [SerializeField] private float _speed = 10.0f;
     [SerializeField] private float _gravity = 30.0f;
-    [SerializeField] private float _jumpH = 15.0f;
+    [SerializeField] private float _jumpH = 12.0f;
     private Animator _anim;
-    private bool _jumping;
+    private bool _jumping = false;
+    private bool _onLedge = false;
+    private Ledge _activeLedge;
 
     void Start()
     {
@@ -20,9 +22,24 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if(_cc.isGrounded == true)
+        if(_cc.enabled == true)
         {
-            if(_jumping == true)
+            CalcMovement();
+        }
+        if(_onLedge == true)
+        {
+            if(Input.GetKeyDown(KeyCode.E))
+            {
+                _anim.SetTrigger("ClimbUp");
+            }
+        }
+    }
+
+    void CalcMovement()
+    {
+        if (_cc.isGrounded == true)
+        {
+            if (_jumping == true)
             {
                 _jumping = false;
                 _anim.SetBool("Jumping", _jumping);
@@ -31,14 +48,14 @@ public class Player : MonoBehaviour
             _direction = new Vector3(0, 0, h) * _speed;
             _anim.SetFloat("Speed", Mathf.Abs(h));
 
-            if(h != 0)
+            if (h != 0)
             {
                 Vector3 facing = transform.localEulerAngles;
                 facing.y = _direction.z > 0 ? 0 : 180;
                 transform.localEulerAngles = facing;
             }
 
-            if(Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.Space))
             {
                 _direction.y += _jumpH;
                 _jumping = true;
@@ -46,7 +63,23 @@ public class Player : MonoBehaviour
             }
         }
         _direction.y -= _gravity * Time.deltaTime;
-
         _cc.Move(_direction * Time.deltaTime);
+    }
+
+    public void GrabLedge(Vector3 handPos, Ledge currentLedge)
+    {
+        _cc.enabled = false;
+        _anim.SetBool("GrabLedge", true);
+        //_anim.SetBool("Jumping", false);
+        transform.position = handPos;
+        _onLedge = true;
+        _activeLedge = currentLedge;
+    }
+
+    public void ClimbComplete()
+    {
+        transform.position = _activeLedge.GetStandPos();
+        _anim.SetBool("GrabLedge", false);
+        _cc.enabled = true;
     }
 }
