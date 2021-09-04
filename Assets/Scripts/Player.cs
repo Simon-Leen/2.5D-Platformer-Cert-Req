@@ -13,11 +13,19 @@ public class Player : MonoBehaviour
     private bool _jumping = false;
     private bool _onLedge = false;
     private Ledge _activeLedge;
+    private int _coins;
+    private UIManager _uIManager;
 
     void Start()
     {
         _cc = GetComponent<CharacterController>();
         _anim = GetComponentInChildren<Animator>();
+        _uIManager = GameObject.Find("Canvas").GetComponent<UIManager>();
+        if (_uIManager == null)
+        {
+            Debug.LogError("UIManager null in Player");
+        }
+        _uIManager.UpdateCoinsDisplay(_coins);
     }
 
     void Update()
@@ -81,5 +89,11 @@ public class Player : MonoBehaviour
         transform.position = _activeLedge.GetStandPos();
         _anim.SetBool("GrabLedge", false);
         _cc.enabled = true;
+    }
+
+    public void UpdateCoins()
+    {
+        _coins++;
+        _uIManager.UpdateCoinsDisplay(_coins);
     }
 }
