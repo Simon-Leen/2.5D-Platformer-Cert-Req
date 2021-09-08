@@ -15,6 +15,10 @@ public class Player : MonoBehaviour
     private Ledge _activeLedge;
     private int _coins;
     private UIManager _uIManager;
+    private bool _rolling;
+    private bool _forward;
+    [SerializeField] private float _colliderHeightNormal, _colliderHeightSmall;
+    [SerializeField] private Vector3 _colliderCenterNormal, _colliderCenterSmall;
 
     void Start()
     {
@@ -30,7 +34,7 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        if(_cc.enabled == true)
+        if (_cc.enabled == true)
         {
             CalcMovement();
         }
@@ -52,22 +56,35 @@ public class Player : MonoBehaviour
                 _jumping = false;
                 _anim.SetBool("Jumping", _jumping);
             }
+
             float h = Input.GetAxisRaw("Horizontal");
-            _direction = new Vector3(0, 0, h) * _speed;
-            _anim.SetFloat("Speed", Mathf.Abs(h));
+            if (_rolling == false)
+            {
+                _direction = new Vector3(0, 0, h) * _speed;
+                _anim.SetFloat("Speed", Mathf.Abs(h));
+            }
 
             if (h != 0)
             {
                 Vector3 facing = transform.localEulerAngles;
                 facing.y = _direction.z > 0 ? 0 : 180;
                 transform.localEulerAngles = facing;
+                _forward = facing.y > 0 ? true : false;
             }
 
-            if (Input.GetKeyDown(KeyCode.Space))
+            if (Input.GetKeyDown(KeyCode.Space) && _rolling == false)
             {
                 _direction.y += _jumpH;
                 _jumping = true;
                 _anim.SetBool("Jumping", _jumping);
+            }
+
+            if (Input.GetKeyDown(KeyCode.LeftShift) && h != 0 && _jumping == false)
+            {
+                _rolling = true;
+                _anim.SetBool("Roll", true);
+                _cc.height = _colliderHeightSmall;
+                _cc.center = _colliderCenterSmall;
             }
         }
         _direction.y -= _gravity * Time.deltaTime;
@@ -78,7 +95,6 @@ public class Player : MonoBehaviour
     {
         _cc.enabled = false;
         _anim.SetBool("GrabLedge", true);
-        //_anim.SetBool("Jumping", false);
         transform.position = handPos;
         _onLedge = true;
         _activeLedge = currentLedge;
@@ -89,6 +105,14 @@ public class Player : MonoBehaviour
         transform.position = _activeLedge.GetStandPos();
         _anim.SetBool("GrabLedge", false);
         _cc.enabled = true;
+    }
+
+    public void RollComplete()
+    {
+        _anim.SetBool("Roll", false);
+        _rolling = false;
+        _cc.height = _colliderHeightNormal;
+        _cc.center = _colliderCenterNormal;
     }
 
     public void UpdateCoins()
