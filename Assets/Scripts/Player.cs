@@ -19,6 +19,7 @@ public class Player : MonoBehaviour
     private bool _forward;
     [SerializeField] private float _colliderHeightNormal, _colliderHeightSmall;
     [SerializeField] private Vector3 _colliderCenterNormal, _colliderCenterSmall;
+    private bool _climbing;
 
     void Start()
     {
@@ -58,12 +59,22 @@ public class Player : MonoBehaviour
             }
 
             float h = Input.GetAxisRaw("Horizontal");
+            float v = Input.GetAxisRaw("Vertical");
             if (_rolling == false)
             {
-                _direction = new Vector3(0, 0, h) * _speed;
-                _anim.SetFloat("Speed", Mathf.Abs(h));
+                if(_climbing == false)
+                {
+                    _direction = new Vector3(0, 0, h) * _speed;
+                    _anim.SetFloat("Speed", Mathf.Abs(h));
+                }
+                else
+                {
+                    _direction = new Vector3(0, v, h) * _speed;
+                    _anim.SetFloat("Speed", Mathf.Abs(v));
+                }
+                
             }
-
+            
             if (h != 0)
             {
                 Vector3 facing = transform.localEulerAngles;
@@ -87,7 +98,15 @@ public class Player : MonoBehaviour
                 _cc.center = _colliderCenterSmall;
             }
         }
-        _direction.y -= _gravity * Time.deltaTime;
+        
+        if(_climbing == true)
+        {
+            _direction.y = 2;
+        }
+        else
+        {
+            _direction.y -= _gravity * Time.deltaTime;
+        }
         _cc.Move(_direction * Time.deltaTime);
     }
 
@@ -113,6 +132,18 @@ public class Player : MonoBehaviour
         _rolling = false;
         _cc.height = _colliderHeightNormal;
         _cc.center = _colliderCenterNormal;
+    }
+
+    public void GrabLadder()
+    {
+        _anim.SetBool("ClimbLadder", true);
+        _climbing = true;
+    }
+
+    public void ReleaseLadder()
+    {
+        _anim.SetBool("ClimbLadder", false);
+        _climbing = false;
     }
 
     public void UpdateCoins()
